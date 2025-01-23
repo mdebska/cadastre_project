@@ -1,57 +1,66 @@
-import folium
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from pydantic import BaseModel
 import geopandas as gpd
 from lxml import etree
+import os
 
-map = folium.Map(location=[52.262323803464994, 20.555945054014632], zoom_start=15)
+app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
+@app.get("/")
+def read_root():
+    return FileResponse(os.path.join("static", "index.html"))
 
-try:
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-    gml_file = 'c:/pythonProject/semestr5/kataster/proj3/Zbiór danych GML ZSK 2025.txt'
-    layer_kontury = 'EGB_KonturKlasyfikacyjny'
-    layer_grunt = 'EGB_KonturUzytkuGruntowego'
+class FileContent(BaseModel):
+    content: str
 
-    with open(gml_file, 'r', encoding='utf-8') as file:
-        xml_content = file.read()
+@app.post("/upload")
+async def upload_file(file_content: FileContent):
+    try:
+        xml_content = file_content.content
+        xml_content = xml_content.replace('<?xml version="1.0" encoding="UTF-8"?>', '')
+        parser = etree.XMLParser(recover=True)
+        root = etree.fromstring(xml_content.encode('utf-8'), parser=parser)
 
-    xml_content = xml_content.replace('<?xml version="1.0" encoding="UTF-8"?>', '')
+        if not os.path.exists('created_data'):
+            os.makedirs('created_data')
 
-    parser = etree.XMLParser(recover=True)
-    root = etree.fromstring(xml_content.encode('utf-8'), parser=parser)
+        fixed_gml_file = r"created_data\fixed_gml.gml"
+        with open(fixed_gml_file, "wb") as f:
+            f.write(etree.tostring(root, pretty_print=True, encoding="utf-8"))
 
-    fixed_gml_file = 'c:/pythonProject/semestr5/kataster/proj3/fixed_gml.gml'
-    with open(fixed_gml_file, 'wb') as file:
-        file.write(etree.tostring(root, pretty_print=True, encoding='utf-8'))
+        layer_kontury = "EGB_KonturKlasyfikacyjny"
+        layer_grunt = "EGB_KonturUzytkuGruntowego"
 
-    # kontury użytku gruntowego
-    gdf = gpd.read_file(fixed_gml_file, layer=layer_grunt)
-    geometries = gdf.geometry
-    geometries_gdf = gpd.GeoDataFrame(geometry=geometries)
-    geometries_gdf.to_file('c:/pythonProject/semestr5/kataster/proj3/geom_grunty.gpkg', driver='GPKG')
-    geometries_gdf = geometries_gdf.to_crs(epsg=4326)
+        # Grunt geometries
+        gdf = gpd.read_file(fixed_gml_file, layer=layer_grunt)
+        geometries_gdf = gdf.geometry
+        geometries_gdf = gpd.GeoDataFrame(geometry=geometries_gdf).to_crs(epsg=4326)
 
-    # Define a style function to set the color to red
-    style_function_red = lambda x: {'color': 'red'}
+        # Kontury geometries
+        gdf1 = gpd.read_file(fixed_gml_file, layer=layer_kontury)
+        geometries_gdf1 = gdf1.geometry
+        geometries_gdf1 = gpd.GeoDataFrame(geometry=geometries_gdf1).to_crs(epsg=4326)
 
-    for index, row in geometries_gdf.iterrows():
-        folium.GeoJson(row['geometry'], style_function=style_function_red).add_to(map)
+        geometries_gdf_json = geometries_gdf.to_json()
+        geometries_gdf1_json = geometries_gdf1.to_json()
+        
+        return {
+            "status": "success",
+            "geometries_gdf": geometries_gdf_json,
+            "geometries_gdf1": geometries_gdf1_json,
+        }
 
-    # kontury klasyfikacyjne
-    gdf1 = gpd.read_file(fixed_gml_file, layer=layer_kontury)
-    geometries1 = gdf1.geometry
-    geometries_gdf1 = gpd.GeoDataFrame(geometry=geometries1)
-    geometries_gdf1.to_file('c:/pythonProject/semestr5/kataster/proj3/geom_kontury.gpkg', driver='GPKG')
-    geometries_gdf1 = geometries_gdf1.to_crs(epsg=4326)
-
-    # Define a style function to make the contour lines thinner
-    style_function_thin = lambda x: {'weight': '1'}
-
-    for index, row in geometries_gdf1.iterrows():
-        folium.GeoJson(row['geometry'], style_function=style_function_thin).add_to(map)
-
-    # Add JavaScript to handle click events and check if the clicked location is inside any geometry
-
-    map.save("Index.html")
-
-except Exception as e:
-    print(f"An error occurred: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
