@@ -7,6 +7,22 @@ import geopandas as gpd
 from lxml import etree
 import os
 
+# WARSTWY W GML'U
+# 'OT_ZagospodarowanieTerenu' (default), 'PrezentacjaGraficzna', 'OT_Rzedna', 'OT_Ogrodzenia', 'OT_Komunikacja', 
+# 'OT_Budowle', 'GES_UrzadzeniaSiecTelekomunikacyjna', 'GES_PrzewodTelekomunikacyjny', 'GES_InneUrzadzeniaTowarzyszace', 
+# 'GES_PrzewodElektroenergetyczny', 'GES_PrzewodWodociagowy', 'GES_Rzedna', 'GES_UrzadzeniaSiecElektroenergetyczna', 
+# 'GES_PrzewodKanalizacyjny', 'GES_UrzadzeniaSiecKanalizacyjna', 'GES_UrzadzeniaSiecWodociagowa', '', 
+# 'EGB_ObrebEwidencyjny', 'EGB_JednostkaEwidencyjna', 'EGB_Budynek', 'EGB_ObiektTrwaleZwiazanyZBudynkiem', 'EGB_BlokBudynku', 
+# 'EGB_KonturUzytkuGruntowego', 'EGB_KonturKlasyfikacyjny', 'EGB_Malzenstwo', 'EGB_OsobaFizyczna', 'EGB_Instytucja', 
+# 'EGB_JednostkaRejestrowaGruntow', 'EGB_UdzialWeWlasnosci', 'EGB_UdzialWeWladaniu', 'EGB_AdresZameldowania', 'EGB_AdresNieruchomosci', 
+# 'EGB_PunktGraniczny', 'EGB_Zmiana', 'EGB_Dokument', 'EGB_OperatTechniczny'
+
+# EGB_KonturKlasyfikacyjny i EGB_DzialkaEwidencyjna, 'EGB_Budynek',  - warstwy z geometriami, wyświetlające się na mapie
+# Co powinno być w tabeli: EGB_DzialkaEwidencyjna, EGB_ObrebEwidencyjny, EGB_JednostkaEwidencyjna,
+# 'EGB_BlokBudynku', EGB_OsobaFizyczna', EGB_AdresNieruchomosci, EGB_PunktGraniczny, EGB_OperatTechniczny
+
+
+
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -41,25 +57,45 @@ async def upload_file(file_content: FileContent):
             f.write(etree.tostring(root, pretty_print=True, encoding="utf-8"))
 
         layer_kontury = "EGB_KonturKlasyfikacyjny"
-        layer_grunt = "EGB_KonturUzytkuGruntowego"
+        layer_budynki = "EGB_Budynek"
+        layer_dzialka = "EGB_DzialkaEwidencyjna"
 
-        # Grunt geometries
-        gdf = gpd.read_file(fixed_gml_file, layer=layer_grunt)
-        geometries_gdf = gdf.geometry
-        geometries_gdf = gpd.GeoDataFrame(geometry=geometries_gdf).to_crs(epsg=4326)
+        # Osoba fizyczna
+        # gdf_osoba = gpd.read_file(fixed_gml_file, layer=layer_osoba)
+        # print(gdf_osoba.columns)
+        # osoba = gdf_osoba[['idOsoby', 'imie', 'nazwisko']]
+
+        # Dzialka geometries
+        gdf = gpd.read_file(fixed_gml_file, layer=layer_dzialka)
+        geometries_gdf = gdf[['idDzialki', 'numerKW', 'poleEwidencyjne' , 'geometry']]
+        geometries_gdf = geometries_gdf.to_crs(epsg=4326)
+        geometries_gdf = gpd.GeoDataFrame(geometries_gdf, geometry='geometry')
+        # print columns
+        # print(geometries_gdf.columns)        
 
         # Kontury geometries
         gdf1 = gpd.read_file(fixed_gml_file, layer=layer_kontury)
-        geometries_gdf1 = gdf1.geometry
-        geometries_gdf1 = gpd.GeoDataFrame(geometry=geometries_gdf1).to_crs(epsg=4326)
+        geometries_gdf1 = gdf1[['idKonturu', 'OZU', 'OZK', 'geometry']]
+        geometries_gdf1 = geometries_gdf1.to_crs(epsg=4326)
+        geometries_gdf1 = gpd.GeoDataFrame(geometries_gdf1, geometry='geometry')
+        # print(geometries_gdf1)
+
+        # Budynki geometries
+        gdf2 = gpd.read_file(fixed_gml_file, layer=layer_budynki)
+        geometries_gdf2 = gdf2[['idBudynku', 'liczbaKondygnacjiNadziemnych', 'liczbaKondygnacjiPodziemnych', 'powZabudowy' ,'geometry']]
+        geometries_gdf2 = geometries_gdf2.to_crs(epsg=4326)
+        geometries_gdf2 = gpd.GeoDataFrame(geometries_gdf2, geometry='geometry')
 
         geometries_gdf_json = geometries_gdf.to_json()
         geometries_gdf1_json = geometries_gdf1.to_json()
+        geometries_gdf2_json = geometries_gdf2.to_json()
+        
         
         return {
             "status": "success",
             "geometries_gdf": geometries_gdf_json,
             "geometries_gdf1": geometries_gdf1_json,
+            "geometries_gdf2": geometries_gdf2_json,
         }
 
     except Exception as e:
