@@ -1,1 +1,1 @@
-Choosen file should be a txt representation od gml file.
+The chosen file should be a '.txt' representation of the '.gml' file.
