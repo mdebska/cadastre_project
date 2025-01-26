@@ -42,25 +42,36 @@ document.getElementById('fileInput').addEventListener('change', function(event) 
                     const geometries_gdf6 = JSON.parse(data.geometries_gdf6);
                     const geometries_gdf7 = JSON.parse(data.geometries_gdf7);
 
-                    const geoJsonLayer = L.geoJSON(geometries_gdf, { style: dzialkaStyle }).addTo(map);
-                    const geoJsonLayer1 = L.geoJSON(geometries_gdf1, { style: kkStyle }).addTo(map);
-                    const geoJsonLayer2 = L.geoJSON(geometries_gdf2, { style: budStyle }).addTo(map);
-                    const geoJsonLayer3 = L.geoJSON(geometries_gdf3, { style: obrebStyle }).addTo(map);
-                    const geoJsonLayer4 = L.geoJSON(geometries_gdf4, { style: jednostkaStyle }).addTo(map);
-                    const geoJsonLayer5 = L.geoJSON(geometries_gdf5, { style: otzzbStyle }).addTo(map);
-                    const geoJsonLayer6 = L.geoJSON(geometries_gdf6, { style: kugStyle }).addTo(map);
+                    // get geometries from geometries_gdf and add them to the map
+                    const polygons_gdf = geometries_gdf.features.map(feature => feature.geometry);
+                    const polygons_gdf1 = geometries_gdf1.features.map(feature => feature.geometry);
+                    const polygons_gdf2 = geometries_gdf2.features.map(feature => feature.geometry);
+                    const polygons_gdf3 = geometries_gdf3.features.map(feature => feature.geometry);
+                    const polygons_gdf4 = geometries_gdf4.features.map(feature => feature.geometry);
+                    const polygons_gdf5 = geometries_gdf5.features.map(feature => feature.geometry);
+                    const polygons_gdf6 = geometries_gdf6.features.map(feature => feature.geometry);
+
+                    const points_gdf = geometries_gdf7.features.map(feature => feature.geometry);
+
+                    const geoJsonLayer = L.geoJSON(polygons_gdf, { style: dzialkaStyle }).addTo(map);
+                    const geoJsonLayer1 = L.geoJSON(polygons_gdf1, { style: kkStyle }).addTo(map);
+                    const geoJsonLayer2 = L.geoJSON(polygons_gdf2, { style: budStyle }).addTo(map);
+                    const geoJsonLayer3 = L.geoJSON(polygons_gdf3, { style: obrebStyle }).addTo(map);
+                    const geoJsonLayer4 = L.geoJSON(polygons_gdf4, { style: jednostkaStyle }).addTo(map);
+                    const geoJsonLayer5 = L.geoJSON(polygons_gdf5, { style: otzzbStyle }).addTo(map);
+                    const geoJsonLayer6 = L.geoJSON(polygons_gdf6, { style: kugStyle }).addTo(map);
                     const geoJsonLayer7 = L.geoJSON(geometries_gdf7, {
-                        pointToLayer: function (feature, latlng) {
-                            const marker = L.circleMarker(latlng)
-                            let idP = feature.properties.idPunktu;
-                            let coords = [latlng.lng, latlng.lat]
-                            let coordPL2178 = proj4('EPSG:4326', 'EPSG:2178', coords);
-                            let coordPL2178Formatted = coordPL2178.map(coord => coord.toFixed(2));
-                            marker.bindTooltip(`<b>ID punktu:</b><br>${idP}<br>
+                            pointToLayer: function (feature, latlng) {
+                                const marker = L.circleMarker(latlng)
+                                let idP = feature.properties.idPunktu;
+                                let coords = [latlng.lng, latlng.lat]
+                                let coordPL2178 = proj4('EPSG:4326', 'EPSG:2178', coords);
+                                let coordPL2178Formatted = coordPL2178.map(coord => coord.toFixed(2));
+                                marker.bindTooltip(`<b>ID punktu:</b><br>${idP}<br>
                                                 <b>Wspolrzedne:</b><br>
                                                 X: ${coordPL2178Formatted[1]}<br>
                                                 Y: ${coordPL2178Formatted[0]}`)
-                            return marker; },
+                                return marker; },
                         style: pgStyle,
                     }).addTo(map);
 
@@ -104,8 +115,10 @@ document.getElementById('fileInput').addEventListener('change', function(event) 
 
                     // Dane dla budynków
                     window.idBudynku = geometries_gdf2.features.map(feature => feature.properties.idBudynku);
-                    window.liczbaKondygnacjiNadziemnych = geometries_gdf2.features.map(feature => feature.properties.liczbaKondygnacjiNadziemnych);
-                    window.liczbaKondygnacjiPodziemnych = geometries_gdf2.features.map(feature => feature.properties.liczbaKondygnacjiPodziemnych);
+                    window.liczbaKondygnacjiNadziemnych =
+                        geometries_gdf2.features.map(feature => feature.properties.liczbaKondygnacjiNadziemnych);
+                    window.liczbaKondygnacjiPodziemnych =
+                        geometries_gdf2.features.map(feature => feature.properties.liczbaKondygnacjiPodziemnych);
                     window.powZabudowy = geometries_gdf2.features.map(feature => feature.properties.powZabudowy);
 
                     // Dane dla obrebu
@@ -191,15 +204,15 @@ map.on('click', function (e) {
         }
     }
 
-    // Check if point is within any of the polygons in geometries_gdf5
-    if (window.polygons_gdf5) {
-        for (const polygon of window.polygons_gdf5) {
-            if (turf.booleanPointInPolygon(turf.point([lng, lat]), polygon)) {
-                createOtzzbButton();
-                break;
-            }
-        }
-    }
+    // // Check if point is within any of the polygons in geometries_gdf5
+    // if (window.polygons_gdf5) {
+    //     for (const polygon of window.polygons_gdf5) {
+    //         if (turf.booleanPointInPolygon(turf.point([lng, lat]), polygon)) {
+    //             createOtzzbButton();
+    //             break;
+    //         }
+    //     }
+    // }
 
     // Check if point is within any of the polygons in geometries_gdf6
     if (window.polygons_gdf6) {
@@ -225,13 +238,17 @@ map.on('click', function (e) {
                     console.log(coordinates);
                     // print lat and lng of the polygon
                     let latlngs = coordinates[0].map(function (coord) {
-                        return coord[1].toFixed(5) + ', ' + coord[0].toFixed(5);
+                        return [coord[0], coord[1]];
                     });
                     coordinatesDiv.innerText = 'Współrzędne działki: ';
                     for (const coord of latlngs) {
-                        coordinatesDiv.innerText += '\n' + coord;
+                        let coordPL2178 = proj4('EPSG:4326', 'EPSG:2178', coord);
+                        let coordPL2178Formatted = coordPL2178.map(coord => coord.toFixed(2));
+                        coordinatesDiv.innerText += '\n' + 'X: ' + coordPL2178Formatted[1] +
+                                                            ' Y: ' + coordPL2178Formatted[0];
                     }
-                    const index = window.polygons_gdf.findIndex(p => JSON.stringify(p.coordinates) === JSON.stringify(polygon.coordinates));
+                    const index = window.polygons_gdf.findIndex(p =>
+                        JSON.stringify(p.coordinates) === JSON.stringify(polygon.coordinates));
                     const idDzialki = window.idDzialki[index];
                     coordinatesDiv.innerText += '\n' + 'ID działki: ' + idDzialki;
 
@@ -262,14 +279,18 @@ map.on('click', function (e) {
                     console.log(coordinates);
                     // print lat and lng of the polygon
                     let latlngs = coordinates[0].map(function (coord) {
-                        return coord[1].toFixed(5) + ', ' + coord[0].toFixed(5);
+                        return [coord[0], coord[1]];
                     });
                     coordinatesDiv.innerText = 'Współrzęne konturów: ';
                     for (const coord of latlngs) {
-                        coordinatesDiv.innerText += '\n' + coord;
+                        let coordPL2178 = proj4('EPSG:4326', 'EPSG:2178', coord);
+                        let coordPL2178Formatted = coordPL2178.map(coord => coord.toFixed(2));
+                        coordinatesDiv.innerText += '\n' + 'X: ' + coordPL2178Formatted[1] +
+                            ' Y: ' + coordPL2178Formatted[0];
                     }
 
-                    const index = window.polygons_gdf1.findIndex(p => JSON.stringify(p.coordinates) === JSON.stringify(polygon.coordinates));
+                    const index = window.polygons_gdf1.findIndex(p =>
+                        JSON.stringify(p.coordinates) === JSON.stringify(polygon.coordinates));
                     const idKonturu = window.idKonturu[index];
                     coordinatesDiv.innerText += '\n' + 'ID konturu: ' + idKonturu;
 
@@ -299,11 +320,14 @@ map.on('click', function (e) {
                     console.log(coordinates);
                     // print lat and lng of the polygon
                     let latlngs = coordinates[0][0].map(function (coord) {
-                        return coord[1].toFixed(5) + ', ' + coord[0].toFixed(5);
+                        return [coord[0], coord[1]];
                     });
                     coordinatesDiv.innerText = 'Współrzędne budynku: ';
                     for (const coord of latlngs) {
-                        coordinatesDiv.innerText += '\n' + coord;
+                        let coordPL2178 = proj4('EPSG:4326', 'EPSG:2178', coord);
+                        let coordPL2178Formatted = coordPL2178.map(coord => coord.toFixed(2));
+                        coordinatesDiv.innerText += '\n' + 'X: ' + coordPL2178Formatted[1] +
+                            ' Y: ' + coordPL2178Formatted[0];
                     }
                     const index = window.polygons_gdf2.findIndex(p => JSON.stringify(p.coordinates) === JSON.stringify(polygon.coordinates));
                     const idBudynku = window.idBudynku[index];
@@ -379,11 +403,14 @@ map.on('click', function (e) {
                     console.log(coordinates);
                     // print lat and lng of the polygon
                     let latlngs = coordinates[0][0].map(function (coord) {
-                        return coord[1].toFixed(5) + ', ' + coord[0].toFixed(5);
+                        return [coord[0], coord[1]];
                     });
                     coordinatesDiv.innerText = 'Współrzędne uzytku gruntowego: ';
                     for (const coord of latlngs) {
-                        coordinatesDiv.innerText += '\n' + coord;
+                        let coordPL2178 = proj4('EPSG:4326', 'EPSG:2178', coord);
+                        let coordPL2178Formatted = coordPL2178.map(coord => coord.toFixed(2));
+                        coordinatesDiv.innerText += '\n' + 'X: ' + coordPL2178Formatted[1] +
+                            ' Y: ' + coordPL2178Formatted[0];
                     }
                     const index = window.polygons_gdf6.findIndex(p => JSON.stringify(p.coordinates) === JSON.stringify(polygon.coordinates));
                     const idUzytku = window.idUzytku[index];
@@ -409,11 +436,14 @@ map.on('click', function (e) {
                     console.log(coordinates);
                     // print lat and lng of the polygon
                     let latlngs = coordinates[0].map(function (coord) {
-                        return coord[1].toFixed(5) + ', ' + coord[0].toFixed(5);
+                        return [coord[0], coord[1]];
                     });
                     coordinatesDiv.innerText = 'Współrzędne obiektu TZZB: ';
                     for (const coord of latlngs) {
-                        coordinatesDiv.innerText += '\n' + coord;
+                        let coordPL2178 = proj4('EPSG:4326', 'EPSG:2178', coord);
+                        let coordPL2178Formatted = coordPL2178.map(coord => coord.toFixed(2));
+                        coordinatesDiv.innerText += '\n' + 'X: ' + coordPL2178Formatted[1] +
+                            ' Y: ' + coordPL2178Formatted[0];
                     }
 
                     break;
