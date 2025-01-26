@@ -171,6 +171,46 @@ map.on('click', function (e) {
         }
     }
 
+    // Check if point is within any of the polygons in geometries_gdf3
+    if (window.polygons_gdf3) {
+        for (const polygon of window.polygons_gdf3) {
+            if (turf.booleanPointInPolygon(turf.point([lng, lat]), polygon)) {
+                createObrebyButton();
+                break;
+            }
+        }
+    }
+
+    // Check if point is within any of the polygons in geometries_gdf4
+    if (window.polygons_gdf4) {
+        for (const polygon of window.polygons_gdf4) {
+            if (turf.booleanPointInPolygon(turf.point([lng, lat]), polygon)) {
+                createJednostkiButton();
+                break;
+            }
+        }
+    }
+
+    // Check if point is within any of the polygons in geometries_gdf5
+    if (window.polygons_gdf5) {
+        for (const polygon of window.polygons_gdf5) {
+            if (turf.booleanPointInPolygon(turf.point([lng, lat]), polygon)) {
+                createOtzzbButton();
+                break;
+            }
+        }
+    }
+
+    // Check if point is within any of the polygons in geometries_gdf6
+    if (window.polygons_gdf6) {
+        for (const polygon of window.polygons_gdf6) {
+            if (turf.booleanPointInPolygon(turf.point([lng, lat]), polygon)) {
+                createKugButton();
+                break;
+            }
+        }
+    }
+
 
     // function to create a button
     function createDzialkiButton() {
@@ -284,5 +324,102 @@ map.on('click', function (e) {
             }
         };
         coordinatesDiv.appendChild(button3);
+    };
+    // function - jednostki ewidencyjne button
+    function createJednostkiButton() {
+        const button4 = document.createElement('button');
+        button4.innerText = 'Wybierz jednostki ewidencyjne';
+        button4.onclick = function() {
+            coordinatesDiv.innerText = "Wybrano jednostki ewidencyjne";
+            // check in which polygon the point is and return the polygons coordinates
+            for (const polygon of window.polygons_gdf4) {
+                if (turf.booleanPointInPolygon(turf.point([lng, lat]), polygon)) {
+                    // const coordinates = polygon.coordinates;
+                    const index = window.polygons_gdf4.findIndex(p => JSON.stringify(p.coordinates) === JSON.stringify(polygon.coordinates));
+                    const idJednostkiEwid = window.idJednostkiEwid[index];
+                    coordinatesDiv.innerText += '\n' + 'ID jednostki ewidencyjnej: ' + idJednostkiEwid;
+
+                    break;
+                }
+            }
+        };
+        coordinatesDiv.appendChild(button4);
+    };
+
+    // function - obreby ewidencyjne button
+    function createObrebyButton() {
+        const button5 = document.createElement('button');
+        button5.innerText = 'Wybierz obreby ewidencyjne';
+        button5.onclick = function() {
+            coordinatesDiv.innerText = "Wybrano obreby ewidencyjne";
+            // check in which polygon the point is and return the polygons coordinates
+            for (const polygon of window.polygons_gdf3) {
+                if (turf.booleanPointInPolygon(turf.point([lng, lat]), polygon)) {
+                    const index = window.polygons_gdf3.findIndex(p => JSON.stringify(p.coordinates) === JSON.stringify(polygon.coordinates));
+                    const idObrebu = window.idObrebu[index];
+                    coordinatesDiv.innerText += '\n' + 'ID obrebu ewidencyjnego: ' + idObrebu;
+
+                    break;
+                }
+            }
+        };
+        coordinatesDiv.appendChild(button5);
+    };
+
+    // function - uzytek gruntowy button
+    function createKugButton() {
+        const button6 = document.createElement('button');
+        button6.innerText = 'Wybierz uzytek gruntowy';
+        button6.onclick = function() {
+            coordinatesDiv.innerText = "Wybrano uzytek gruntowy";
+            // check in which polygon the point is and return the polygons coordinates
+            for (const polygon of window.polygons_gdf6) {
+                if (turf.booleanPointInPolygon(turf.point([lng, lat]), polygon)) {
+                    const coordinates = polygon.coordinates;
+                    console.log(coordinates);
+                    // print lat and lng of the polygon
+                    let latlngs = coordinates[0][0].map(function (coord) {
+                        return coord[1].toFixed(5) + ', ' + coord[0].toFixed(5);
+                    });
+                    coordinatesDiv.innerText = 'Współrzędne uzytku gruntowego: ';
+                    for (const coord of latlngs) {
+                        coordinatesDiv.innerText += '\n' + coord;
+                    }
+                    const index = window.polygons_gdf6.findIndex(p => JSON.stringify(p.coordinates) === JSON.stringify(polygon.coordinates));
+                    const idUzytku = window.idUzytku[index];
+                    coordinatesDiv.innerText += '\n' + 'ID uzytku gruntowego: ' + idUzytku;
+
+                    break;
+                }
+            }
+        };
+        coordinatesDiv.appendChild(button6);
+    };
+
+    // function - obiekty TZZB button
+    function createOtzzbButton() {
+        const button7 = document.createElement('button');
+        button7.innerText = 'Wybierz obiekty TZZB';
+        button7.onclick = function() {
+            coordinatesDiv.innerText = "Wybrano obiekty TZZB";
+            // check in which polygon the point is and return the polygons coordinates
+            for (const polygon of window.polygons_gdf5) {
+                if (turf.booleanPointInPolygon(turf.point([lng, lat]), polygon)) {
+                    const coordinates = polygon.coordinates;
+                    console.log(coordinates);
+                    // print lat and lng of the polygon
+                    let latlngs = coordinates[0].map(function (coord) {
+                        return coord[1].toFixed(5) + ', ' + coord[0].toFixed(5);
+                    });
+                    coordinatesDiv.innerText = 'Współrzędne obiektu TZZB: ';
+                    for (const coord of latlngs) {
+                        coordinatesDiv.innerText += '\n' + coord;
+                    }
+
+                    break;
+                }
+            }
+        };
+        coordinatesDiv.appendChild(button7);
     };
 });
