@@ -1,8 +1,9 @@
 
 const map = L.map('map').setView([0,0], 2);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
+const baseMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 22
 }).addTo(map);
+const baseMaps = {'OSM': baseMap};
 
 document.getElementById('fileInput').addEventListener('change', function(event) {
     const file = event.target.files[0];
@@ -21,33 +22,73 @@ document.getElementById('fileInput').addEventListener('change', function(event) 
                 const data = await response.json();
                 if (data.status === "success") {
                     // Parse and add geometries to the map
-                    const redStyle = { color: "red" };
-                    const thinStyle = { color: "green", weight: 1 };
-                    const blackStyle = { color: "black", weight: 2 };
+                    const kkStyle = { color: "green", weight: 2, fillOpacity: 0 };
+                    const dzialkaStyle = { color: "black", weight: 3, fillOpacity: 0 };
+                    const budStyle = { color: "red", weight: 1 };
+                    const obrebStyle = { color: "blue", weight: 3, dashArray: "5, 10", fillOpacity: 0};
+                    const jednostkaStyle = { color: "red", weight: 3, dashArray: "5, 10", fillOpacity: 0};
+                    const otzzbStyle = { color: "orange", weight: 1};
+                    const kugStyle = { color: "brown", weight: 1, fillOpacity: 0 };
+                    const pgStyle = { fillColor: "white", color: 'black', radius: 2, fillOpacity: 1, weight: 1};
 
                     const geometries_gdf = JSON.parse(data.geometries_gdf);
                     const geometries_gdf1 = JSON.parse(data.geometries_gdf1);
                     const geometries_gdf2 = JSON.parse(data.geometries_gdf2);
+                    const geometries_gdf3 = JSON.parse(data.geometries_gdf3);
+                    const geometries_gdf4 = JSON.parse(data.geometries_gdf4);
+                    const geometries_gdf5 = JSON.parse(data.geometries_gdf5);
+                    const geometries_gdf6 = JSON.parse(data.geometries_gdf6);
+                    const geometries_gdf7 = JSON.parse(data.geometries_gdf7);
 
                     // get geometries from geometries_gdf and add them to the map
                     const polygons_gdf = geometries_gdf.features.map(feature => feature.geometry);
                     const polygons_gdf1 = geometries_gdf1.features.map(feature => feature.geometry);
                     const polygons_gdf2 = geometries_gdf2.features.map(feature => feature.geometry);
+                    const polygons_gdf3 = geometries_gdf3.features.map(feature => feature.geometry);
+                    const polygons_gdf4 = geometries_gdf4.features.map(feature => feature.geometry);
+                    const polygons_gdf5 = geometries_gdf5.features.map(feature => feature.geometry);
+                    const polygons_gdf6 = geometries_gdf6.features.map(feature => feature.geometry);
 
-                    const geoJsonLayer2 = L.geoJSON(polygons_gdf1, { style: redStyle }).addTo(map);
-                    const geoJsonLayer1 = L.geoJSON(polygons_gdf, { style: thinStyle }).addTo(map);
-                    const geoJsonLayer3 = L.geoJSON(polygons_gdf2, { style: blackStyle }).addTo(map);
+                    const points_gdf = geometries_gdf7.features.map(feature => feature.geometry);
+
+                    const geoJsonLayer = L.geoJSON(polygons_gdf, { style: dzialkaStyle }).addTo(map);
+                    const geoJsonLayer1 = L.geoJSON(polygons_gdf1, { style: kkStyle }).addTo(map);
+                    const geoJsonLayer2 = L.geoJSON(polygons_gdf2, { style: budStyle }).addTo(map);
+                    const geoJsonLayer3 = L.geoJSON(polygons_gdf3, { style: obrebStyle }).addTo(map);
+                    const geoJsonLayer4 = L.geoJSON(polygons_gdf4, { style: jednostkaStyle }).addTo(map);
+                    const geoJsonLayer5 = L.geoJSON(polygons_gdf5, { style: otzzbStyle }).addTo(map);
+                    const geoJsonLayer6 = L.geoJSON(polygons_gdf6, { style: kugStyle }).addTo(map);
+                    const geoJsonLayer7 = L.geoJSON(points_gdf, {
+                        pointToLayer: function (feature, latlng) { return L.circleMarker(latlng); },
+                        style: pgStyle,
+                    }).addTo(map);
 
                     // zoom the map to the bounds of the geometries
                     map.fitBounds(geoJsonLayer1.getBounds());
 
                     // Store the layers globally for later use
-                    window.geoJsonLayers = [geoJsonLayer1, geoJsonLayer2, geoJsonLayer3];
+                    window.geoJsonLayers = [geoJsonLayer, geoJsonLayer1, geoJsonLayer2, geoJsonLayer3, geoJsonLayer4, geoJsonLayer5, geoJsonLayer6, geoJsonLayer7];
+                    window.Overlay = {
+                        'Jednostki ewidencyjne': geoJsonLayer4,
+                        'Obreby ewidencyjne': geoJsonLayer3,
+                        'Kontury klasyfikacyjne': geoJsonLayer1,
+                        'Kontury uzytku gruntowego': geoJsonLayer6,
+                        'Dzialki ewidencyjne': geoJsonLayer,
+                        'Budynki': geoJsonLayer2,
+                        'Obiekty TZZB': geoJsonLayer5,
+                        'Punkty graniczne': geoJsonLayer7,
+                    }
+                    var layerControl = L.control.layers(baseMaps, Overlay).addTo(map);
 
                     // Save each polygon in geometries_gdf to a variable
                     window.polygons_gdf = geometries_gdf.features.map(feature => feature.geometry);
                     window.polygons_gdf1 = geometries_gdf1.features.map(feature => feature.geometry);
                     window.polygons_gdf2 = geometries_gdf2.features.map(feature => feature.geometry);
+                    window.polygons_gdf3 = geometries_gdf3.features.map(feature => feature.geometry);
+                    window.polygons_gdf4 = geometries_gdf4.features.map(feature => feature.geometry);
+                    window.polygons_gdf5 = geometries_gdf5.features.map(feature => feature.geometry);
+                    window.polygons_gdf6 = geometries_gdf6.features.map(feature => feature.geometry);
+                    window.points_gdf = geometries_gdf7.features.map(feature => feature.geometry);
 
                     // Dane dla konturów
                     window.idKonturu = geometries_gdf1.features.map(feature => feature.properties.idKonturu);
@@ -65,6 +106,17 @@ document.getElementById('fileInput').addEventListener('change', function(event) 
                     window.liczbaKondygnacjiPodziemnych = geometries_gdf2.features.map(feature => feature.properties.liczbaKondygnacjiPodziemnych);
                     window.powZabudowy = geometries_gdf2.features.map(feature => feature.properties.powZabudowy);
 
+                    // Dane dla obrebu
+                    window.idObrebu = geometries_gdf3.features.map(feature => feature.properties.idObrebu);
+
+                    // Dane dla jednostki
+                    window.idJednostkiEwid = geometries_gdf4.features.map(feature => feature.properties.idJednostkiEwid);
+
+                    // Dane dla kug
+                    window.idUzytku = geometries_gdf6.features.map(feature => feature.properties.idUzytku);
+
+                    // Dane punktu granicznego
+                    window.idPunktu = geometries_gdf7.features.map(feature => feature.properties.idPunktu);
 
                 } else {
                     alert("Error: " + data.message);

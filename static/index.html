@@ -24,6 +24,37 @@
             padding: 5px;
             border: 1px solid black;
         }
+
+        .square {
+            height: 12px;
+            width: 12px;
+            background-color: rgba(0, 0, 0, 0);
+            display: inline-block;
+            border-style: solid;
+        }
+
+        .dot {
+            height: 12px;
+            width: 12px;
+            background-color: rgba(0, 0, 0, 0);
+            border-radius: 50%;
+            display: inline-block;
+            border-style: solid;
+        }
+
+        .legenda {
+            position: fixed;
+            bottom: 50px;
+            left: 50px;
+            width: 200px;
+            height: 200px;
+            border:2px solid grey;
+            z-index:9999;
+            font-size:14px;
+            background-color:white;
+            opacity: 0.85;
+            padding: 5px
+        }
     </style>
 </head>
 <body>
@@ -32,6 +63,26 @@
     <div style="position: fixed; top: 10px; left: 50px; z-index: 1000;">
         <input type="file" id="fileInput" accept=".txt" style="display: none;" />
         <button onclick="document.getElementById('fileInput').click();">Choose TXT File</button>
+    </div>
+    <div class="legenda">
+         <span class="square" style="height: 5px;background-color: rgba(255, 0, 0, 0); border-color: rgba(255, 0, 0, 0)"></span>
+            &nbsp; <b>Legenda</b> <br>
+         <span class="square" style="border-color: rgba(255, 0, 0, 1); border-style: dashed"></span>
+        &nbsp;     Jednostka ewidencyjna<br>
+         <span class="square" style="border-color: rgba(0, 0, 255, 1); border-style: dashed"></span>
+        &nbsp;     Obręb ewidencyjny<br>
+         <span class="square" style="border-color: rgba(0, 125, 0, 1)"></span>
+            &nbsp; Kontur klasyfikacyjny<br>
+         <span class="square" style="border-color: rgba(88, 57, 39, 1)"></span>
+            &nbsp; Kontur użytku gruntowego<br>
+         <span class="square" style="border-color: rgba(0, 0, 0, 1)"></span>
+            &nbsp; Działka ewidencyjna<br>
+         <span class="square" style="background-color: rgba(255, 0, 0, 0.5); border-color: rgba(255, 0, 0, 1)"></span>
+            &nbsp; Budynek<br>
+        <span class="square" style="background-color: rgba(255, 151, 0, 0.5); border-color: rgba(255, 151, 0, 1)"></span>
+            &nbsp; Obiekt TZZB<br>
+        <span class="dot" style="background-color: rgba(255, 255, 255, 1); border-color: rgba(0, 0, 0, 1)"></span>
+            &nbsp; Punkt Graniczny<br>
     </div>
     <script src="static/main.js"></script>
 </body>
